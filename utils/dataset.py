@@ -3,11 +3,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2
 from tqdm import tqdm
+from pathlib import Path
 
 from utils.draw import draw_boxes_with_label
 from utils.boxes import xywh_to_xyxy, scale_xywh
 
-
+# This script is dedicated for FSOFT Datacomp only
+'''
+Disable for FSOFT Datacomp
 def check_num_files(dir):
     """ Function to check if number of annotations file is correspond with
     number of images
@@ -32,7 +35,7 @@ def check_num_files(dir):
         for annotation in annotation_files:
             if annotation not in image_names:
                 file.write(f'{annotation} \n')
-    print("Done checking")
+    print("Done checking")'''
 
 
 def inspect_every_images(dir, training=True, phrase=None):
@@ -65,7 +68,7 @@ def inspect_every_images(dir, training=True, phrase=None):
                 plt.imshow(img)
                 plt.show()
         else:
-            image_name = label.split('.')[0]
+            image_name = '.'.join(label.split('.')[:4]) # dedicated for baseline dataset provided by FSOFT
             label_path = os.path.join(label_dir, label)
             data = np.loadtxt(label_path)
             if data.ndim == 1:
