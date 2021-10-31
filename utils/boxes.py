@@ -82,6 +82,8 @@ def scale_box(img, box):
         nb4 = torch.round(box[:, 3] * h)
         return torch.vstack((nb1, nb2, nb3, nb4)).type(torch.int).T
 
+# Use scale_box() for both instead
+'''
 def scale_xyxy(img, box):
     """
     Scale normalized box w.r.t image true height and width.
@@ -145,7 +147,7 @@ def scale_xywh(img, box):
         w = torch.round(box[:, 2] * width)
         h = torch.round(box[:, 3] * height)
         return torch.vstack((cX, cY, w, h)).type(torch.int).T
-
+'''
 
 def normalize_box(img, box):
     """ Normalize any box format w.r.t image size """
@@ -193,5 +195,3 @@ if __name__ == '__main__':
         [0.1, 0.2, 0.3, 0.4],
         [0.2, 0.3, 0.4, 0.5]
     ])
-    print(scale_xyxy(np.ones((1, 240, 240, 3)), normalized_np_xyxy))
-    print(scale_xyxy(torch.ones((1, 3, 240, 240)), normalized_torch_xyxy))
