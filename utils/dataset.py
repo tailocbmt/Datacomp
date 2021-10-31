@@ -3,10 +3,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2
 from tqdm import tqdm
+import yaml
 from pathlib import Path
 
 from utils.draw import draw_boxes_with_label
-from utils.boxes import xywh_to_xyxy, scale_xywh
+from utils.boxes import xywh_to_xyxy, scale_box
 
 # This script is dedicated for FSOFT Datacomp only
 '''
@@ -44,8 +45,8 @@ def inspect_every_images(dir, training=True, phrase=None):
     annotations file must have YOLO format
     """
     if training:
-        image_dir = os.path.join(dir, "images/train")
-        label_dir = os.path.join(dir, "labels/train")
+        image_dir = os.path.join(dir, "images/public_test")
+        label_dir = os.path.join(dir, "labels/public_test")
     else:
         image_dir = os.path.join(dir, "images/validation")
         label_dir = os.path.join(dir, "labels/validation")
@@ -61,7 +62,7 @@ def inspect_every_images(dir, training=True, phrase=None):
                 image = cv2.imread(f'{image_dir}/{image_name}.jpg')
                 labels = data[:, 0]
                 bboxes = data[:, 1:]
-                xywhs = scale_xywh(image, bboxes)
+                xywhs = scale_box(image, bboxes) # Update 27/10: change to scale_box instead of scale_xywh
                 xyxys = xywh_to_xyxy(xywhs)
                 img = draw_boxes_with_label(image, xyxys, labels)
                 img = img[:, :, ::-1]
@@ -76,7 +77,7 @@ def inspect_every_images(dir, training=True, phrase=None):
             image = cv2.imread(f'{image_dir}/{image_name}.jpg')
             labels = data[:, 0]
             bboxes = data[:, 1:]
-            xywhs = scale_xywh(image, bboxes)
+            xywhs = scale_box(image, bboxes) # Update 27/10: change to scale_box instead of scale_xywh
             xyxys = xywh_to_xyxy(xywhs)
             img = draw_boxes_with_label(image, xyxys, labels)
             img = img[:, :, ::-1]
@@ -84,3 +85,14 @@ def inspect_every_images(dir, training=True, phrase=None):
             plt.title(image_name)
             plt.show()
 
+
+def YOLO_to_COCO(root_dir, image_dir, label_dir, dataset_path):
+    # Read yaml
+    if isinstance(dataset_path, (str, Path)):
+        with open(dataset_path, errors='ignore') as f:
+            data = yaml.safe_load(f)  # dictionary
+    # Parse yaml
+    path = Path(data.get('path') or '')  # optional 'path' default to '.'
+    for k in 'train', 'val', 'test':
+        if data.get(k):  # prepend path
+            data[k] = str(path / data[k]) if isinstance(data[k], str) else [str(path / x) for x in data[k]]
