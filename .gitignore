@@ -1,1 +1,4 @@
 baseline dataset/
+fixed baseline/
+*.txt
+*.docx
