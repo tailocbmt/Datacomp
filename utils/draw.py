@@ -34,7 +34,7 @@ def draw_one_box(img, xyxy, color=(255, 255, 255), thickness=2):
     return img
 
 
-def draw_boxes_with_label(img, xyxys, labels, thickness=2):
+def draw_boxes_with_label(img, xyxys, labels, thickness=2, no_label=False):
     for i, xyxy in enumerate(xyxys):
         if isinstance(xyxy, torch.Tensor):
             xyxy = xyxy.cpu().numpy()
@@ -43,8 +43,9 @@ def draw_boxes_with_label(img, xyxys, labels, thickness=2):
         label = '{}{:d}'.format("", id)
         t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2, 2)[0]
         cv2.rectangle(img, (xyxy[0], xyxy[1]), (xyxy[2], xyxy[3]), color, thickness=thickness)
-        cv2.rectangle(img, (xyxy[0], xyxy[1]), (xyxy[0] + t_size[0] + 3, xyxy[1] + t_size[1] + 4), color, -1)
-        cv2.putText(img, label, (xyxy[0], xyxy[1] + t_size[1] + 4), cv2.FONT_HERSHEY_PLAIN, 2, [255, 255, 255], 2)
+        if not no_label:
+            cv2.rectangle(img, (xyxy[0], xyxy[1]), (xyxy[0] + t_size[0] + 3, xyxy[1] + t_size[1] + 4), color, -1)
+            cv2.putText(img, label, (xyxy[0], xyxy[1] + t_size[1] + 4), cv2.FONT_HERSHEY_PLAIN, 2, [255, 255, 255], 2)
     return img
 
 if __name__ == '__main__':

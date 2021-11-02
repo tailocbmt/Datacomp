@@ -39,7 +39,7 @@ def check_num_files(dir):
     print("Done checking")'''
 
 
-def inspect_every_images(dir, image_folder, label_folder, phrase=None):
+def inspect_every_images(dir, image_folder, label_folder, no_label = False, phrase=None):
     """
     Function to inspect every image in a directory with its annotation one by one
     annotations file must have YOLO format
@@ -56,12 +56,13 @@ def inspect_every_images(dir, image_folder, label_folder, phrase=None):
                 if data.ndim == 1:
                     data = np.expand_dims(data, axis=0)
                 image = cv2.imread(f'{image_dir}/{image_name}.jpg')
-                labels = data[:, 0]
-                bboxes = data[:, 1:]
-                xywhs = scale_box(image, bboxes) # Update 27/10: change to scale_box instead of scale_xywh
-                xyxys = xywh_to_xyxy(xywhs)
-                img = draw_boxes_with_label(image, xyxys, labels)
-                img = img[:, :, ::-1]
+                if data.size:
+                    labels = data[:, 0]
+                    bboxes = data[:, 1:]
+                    xywhs = scale_box(image, bboxes) # Update 27/10: change to scale_box instead of scale_xywh
+                    xyxys = xywh_to_xyxy(xywhs)
+                    image = draw_boxes_with_label(image, xyxys, labels, no_label=no_label)
+                img = image[:, :, ::-1]
                 plt.imshow(img)
                 plt.show()
         else:
@@ -71,12 +72,13 @@ def inspect_every_images(dir, image_folder, label_folder, phrase=None):
             if data.ndim == 1:
                 data = np.expand_dims(data, axis=0)
             image = cv2.imread(f'{image_dir}/{image_name}.jpg')
-            labels = data[:, 0]
-            bboxes = data[:, 1:]
-            xywhs = scale_box(image, bboxes) # Update 27/10: change to scale_box instead of scale_xywh
-            xyxys = xywh_to_xyxy(xywhs)
-            img = draw_boxes_with_label(image, xyxys, labels)
-            img = img[:, :, ::-1]
+            if data.size:
+                labels = data[:, 0]
+                bboxes = data[:, 1:]
+                xywhs = scale_box(image, bboxes) # Update 27/10: change to scale_box instead of scale_xywh
+                xyxys = xywh_to_xyxy(xywhs)
+                image = draw_boxes_with_label(image, xyxys, labels, no_label=no_label)
+            img = image[:, :, ::-1]
             plt.imshow(img)
             plt.title(image_name)
             plt.show()
