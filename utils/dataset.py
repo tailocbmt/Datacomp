@@ -39,17 +39,13 @@ def check_num_files(dir):
     print("Done checking")'''
 
 
-def inspect_every_images(dir, training=True, phrase=None):
+def inspect_every_images(dir, image_folder, label_folder, phrase=None):
     """
     Function to inspect every image in a directory with its annotation one by one
     annotations file must have YOLO format
     """
-    if training:
-        image_dir = os.path.join(dir, "images/public_test")
-        label_dir = os.path.join(dir, "labels/public_test")
-    else:
-        image_dir = os.path.join(dir, "images/validation")
-        label_dir = os.path.join(dir, "labels/validation")
+    image_dir = os.path.join(dir, image_folder)
+    label_dir = os.path.join(dir, label_folder)
     for label in tqdm(os.listdir(label_dir), leave=False):
         if phrase:
             assert isinstance(phrase, str), "phrase to check must be a string"
@@ -69,7 +65,7 @@ def inspect_every_images(dir, training=True, phrase=None):
                 plt.imshow(img)
                 plt.show()
         else:
-            image_name = '.'.join(label.split('.')[:4]) # dedicated for baseline dataset provided by FSOFT
+            image_name = label.split('.')[0] # change accordingly to dataset
             label_path = os.path.join(label_dir, label)
             data = np.loadtxt(label_path)
             if data.ndim == 1:
