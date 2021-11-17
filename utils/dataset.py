@@ -9,10 +9,8 @@ from pathlib import Path
 from utils.draw import draw_boxes_with_label
 from utils.boxes import xywh_to_xyxy, scale_box
 
-# This script is dedicated for FSOFT Datacomp only
-'''
-Disable for FSOFT Datacomp
-def check_num_files(dir):
+
+def check_num_files(dir, image_folder, label_folder):
     """ Function to check if number of annotations file is correspond with
     number of images
     If not, return a *.txt file of unmatched image or annotation file
@@ -20,10 +18,10 @@ def check_num_files(dir):
 
     image_names = []
     annotation_files = []
-    for image in os.listdir(os.path.join(dir, "images")):
+    for image in os.listdir(os.path.join(dir, image_folder)):
         name = image.split('.')[0]
         image_names.append(name)
-    for annotations in os.listdir(os.path.join(dir, "labels")):
+    for annotations in os.listdir(os.path.join(dir, label_folder)):
         name = annotations.split('.')[0]
         annotation_files.append(name)
     print("Begin checking for matching images and annotations")
@@ -36,7 +34,7 @@ def check_num_files(dir):
         for annotation in annotation_files:
             if annotation not in image_names:
                 file.write(f'{annotation} \n')
-    print("Done checking")'''
+    print("Done checking")
 
 
 def inspect_every_images(dir, image_folder, label_folder, no_label = False, phrase=None):
@@ -83,14 +81,3 @@ def inspect_every_images(dir, image_folder, label_folder, no_label = False, phra
             plt.title(image_name)
             plt.show()
 
-
-def YOLO_to_COCO(root_dir, image_dir, label_dir, dataset_path):
-    # Read yaml
-    if isinstance(dataset_path, (str, Path)):
-        with open(dataset_path, errors='ignore') as f:
-            data = yaml.safe_load(f)  # dictionary
-    # Parse yaml
-    path = Path(data.get('path') or '')  # optional 'path' default to '.'
-    for k in 'train', 'val', 'test':
-        if data.get(k):  # prepend path
-            data[k] = str(path / data[k]) if isinstance(data[k], str) else [str(path / x) for x in data[k]]
