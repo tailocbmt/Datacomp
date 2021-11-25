@@ -1,4 +1,5 @@
 import argparse
+import copy
 import sys
 from pathlib import Path
 from tqdm import tqdm
@@ -7,14 +8,16 @@ import matplotlib.pyplot as plt
 
 import cv2
 import torch
+import os.path as osp
+import os
 
-from DataComp.models.experimental import attempt_load
-from DataComp.utils.datasets import LoadImages, create_dataloader
-from DataComp.utils.general import check_img_size, check_requirements, colorstr, is_ascii, \
+from models.experimental import attempt_load
+from utils.datasets import LoadImages, create_dataloader
+from utils.general import check_img_size, check_requirements, colorstr, is_ascii, \
     non_max_suppression, scale_coords, box_iou, set_logging, increment_path, \
     xywh2xyxy
-from DataComp.utils.plots import Annotator, colors
-from DataComp.utils.torch_utils import select_device, time_sync
+from utils.plots import Annotator, colors
+from utils.torch_utils import select_device, time_sync
 
 
 FILE = Path(__file__).resolve()
@@ -50,7 +53,13 @@ def run(weights,  # model.pt path(s)
     '''# Directories
     save_dir = increment_path(Path(dir), exist_ok=exist_ok)  # increment run
     (save_dir / 'labels' if save_txt else save_dir).mkdir(parents=True, exist_ok=True)  # make dir'''
-
+    dst_dir = osp.join(source, 'visualize')
+    if not os.path.exists(dst_dir):
+        os.mkdir(dst_dir)
+    if not os.path.exists(osp.join(dst_dir, 'train')):
+        os.mkdir(osp.join(dst_dir, 'train'))
+    if not os.path.exists(osp.join(dst_dir, 'val')):
+        os.mkdir(osp.join(dst_dir, 'val'))
     # Initialize
     set_logging()
     device = select_device(device)
@@ -80,6 +89,8 @@ def run(weights,  # model.pt path(s)
         model(torch.zeros(1, 3, img_size, img_size).to(device).type_as(next(model.parameters())))  # run once
     for i, (img, targets, paths, shapes) in enumerate(tqdm(dataset)): # read single image at a time
         #im0 = np.ascontiguousarray(img[0].permute((1, 2, 0)).numpy()[:, :, ::-1]) # get np.ndarray image
+        im_name = '/'.join(paths[0].split('\\')[-2:])
+        print(im_name)
         im0 = cv2.imread(paths[0])
         annotator = Annotator(im0, line_width=1, pil=False)
 
@@ -89,57 +100,71 @@ def run(weights,  # model.pt path(s)
 
         out = model(img, augment=augment)[0]  # inference outputs
         targets[:, 2:] *= torch.Tensor([width, height, width, height]).to(device)  # to pixels
+        """
+            Post process bboxes
+            1. Non max suppression
 
-        out = non_max_suppression(out, conf_threshold, iou_threshold, labels=classes, multi_label=True)
+        """
+        out = non_max_suppression(out, conf_threshold, iou_threshold, labels=classes, multi_label=True)[0]
 
-        for si, pred in enumerate(out): # per image
-            labels = targets[targets[:, 0] == si, 1:]
-            nl = len(labels)
+        # gt bboxes
+        labels_per_img = targets[: , 1:]
+        labels_per_img[:, 1:] = xywh2xyxy(labels_per_img[:, 1:])
+        scale_labels = copy.deepcopy(labels_per_img)
+        scale_labels[:, 1:] = scale_coords(img.shape[2:], scale_labels[:, 1:], im0.shape[:2])
+        # Draw gt bboxes
+        for j, *target_xyxy in enumerate(scale_labels):
+            target_xyxy = target_xyxy[0].cpu().numpy()
+            gt_label, gt_xyxy = str(int(target_xyxy[0])),target_xyxy[1:] 
+            try:
+                annotator.box_label(gt_xyxy, label=gt_label, color=(0, 0, 255), text_position='br') # red box for ground truth (only label)
+            except: # catch un-detected prediction
+                annotator.box_label(gt_xyxy, label=None, color=(0, 0, 255), text_position='br') # red box for ground truth
 
+
+        # Draw predicted bboxes
+        for si, pred in enumerate(out): # per bbox
             normed_pred = pred.clone()
+
             # Evaluate iou
-            if nl:
-                target_boxes = xywh2xyxy(labels[:, 1:5])  # target boxes
-                labels_per_img = torch.cat((labels[:, 0:1], target_boxes), 1)  # native-space labels
-                ious = box_iou(labels_per_img[:, 1:], normed_pred[:, :4]) #torch.Tensor (num_detections, iou)
-                '''x = torch.where((ious >= 0) & (labels[:, 0:1] == normed_pred[:, 5]))
-                if x[0].shape[0]:
-                    # label, detection, iou
-                    matches = torch.cat((torch.stack(x, 1), ious[x[0], x[1]][:, None]), 1).cpu().numpy()'''
+            same_labels = labels_per_img[labels_per_img[:, 0] == normed_pred[5]]
+            if len(same_labels) == 0:
+                continue
+            normed_pred = torch.unsqueeze(pred, dim=0)
+            
+            ious = box_iou(same_labels[:, 1:], normed_pred[:, :4]) #torch.Tensor (num_detections, iou)
+            # change ious from torch.Tensor to string to display
+            ious = ious.cpu()
 
-                # scale box for original image
-                target_boxes = scale_coords(img.shape[2:], target_boxes, im0.shape[:2])
-                normed_pred[:, :4] = scale_coords(img.shape[2:], normed_pred[:, :4], im0.shape[:2])
+            idmax = torch.argmax(ious)
+            max_iou = ious[idmax][0]
 
-                # change ious from torch.Tensor to string to display
-                ious = ious.cpu().numpy()
-                iou_str = []
-                for iou in ious:
-                    iou = iou[0] # because 2-D array
-                    iou = str(iou)
-                    iou_str.append(iou)
+            # scale box for original image
+            normed_pred[:, :4] = scale_coords(img.shape[2:], normed_pred[:, :4], im0.shape[:2])
+            same_labels[:, 1:] = scale_coords(img.shape[2:], same_labels[:, 1:], im0.shape[:2])
+            
+            # Loop through prediction to draw intersection of predicted bbox and gt bbox
+            *xyxy, conf, cls = normed_pred[0]
 
-                # Loop through prediction to draw box
-                for i, *target_xyxy in enumerate(target_boxes):
-                    try:
-                        *xyxy, conf, cls = normed_pred[i]
-                        annotator.box_label(xyxy, label=iou_str[i], color=(0, 255, 0)) # green box for prediction box with iou
-                        annotator.box_label(target_xyxy[0], label=None, color=(0, 0, 255)) # red box for ground truth
-                    except: # catch un-detected prediction
-                        annotator.box_label(target_xyxy[0], label=None, color=(0, 0, 255)) # red box for ground truth
+            gt_xyxy = same_labels[idmax].cpu().numpy()[1:]
+
+            annotator.box_label(xyxy, label="{} {:.2f}".format(int(cls) ,max_iou), color=(0, 255, 0)) # green box for prediction box with iou (iou and label)
+
+            if max_iou < 0.5:
+                continue
+            elif max_iou >= 0.5:
+                annotator.intersect_box(xyxy, gt_xyxy, box_color=(255, 0, 0))
+            else:
+                raise ValueError('IOU cannot be negative')            
 
         # Display image
-        cv2.imshow(f'{paths[0]}', im0)
-        cv2.waitKey(0)
-        '''plt.imshow(im0)
-        plt.title(paths[0])
-        plt.show()'''
+        cv2.imwrite(osp.join(dst_dir, im_name), im0)
 
 
 def parser():
     args = argparse.ArgumentParser()
-    args.add_argument('--weights', type=str, help='specify your weight path', required=True)
-    args.add_argument('--source', type=str, help='folder contain image', required=True)
+    args.add_argument('--weights', type=str, help='specify your weight path', default='Datacomp/best.pt')
+    args.add_argument('--source', type=str, help='folder contain image', default='Datacomp/baseline')
     args.add_argument('--dir',type=str, help='save results to dir', required=False)
     args.add_argument('--conf-threshold', type=float, default=0.25, help='confidence threshold')
     args.add_argument('--iou-threshold', type=float, default=0.6, help='NMS IoU threshold')

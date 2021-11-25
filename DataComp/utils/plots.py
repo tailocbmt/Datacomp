@@ -9,6 +9,7 @@ from copy import copy
 from pathlib import Path
 
 import cv2
+import copy
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -78,12 +79,17 @@ class Annotator:
             self.im = im
         self.lw = line_width or max(round(sum(im.shape) / 2 * 0.003), 2)  # line width
 
-    def box_label(self, box, label='', color=(128, 128, 128), txt_color=(255, 255, 255)):
+    def box_label(self, box, label=None, color=(128, 128, 128), txt_color=(255, 255, 255), text_position='tl'):
         # Add one xyxy box to image with label
         if self.pil or not is_ascii(label):
             self.draw.rectangle(box, width=self.lw, outline=color)  # box
             if label:
                 w = self.font.getsize(label)[0]  # text width
+                # if self.text_position == 'tl':
+                #     c2 = c1[0] + w, c1[1] - h - 3
+                # elif self.text_position == 'br':
+                #     c1 = c2[0] - w, c2[1] + h + 3
+
                 self.draw.rectangle([box[0], box[1] - self.fh, box[0] + w + 1, box[1] + 1], fill=color)
                 self.draw.text((box[0], box[1]), label, fill=txt_color, font=self.font, anchor='ls')
         else:  # cv2
@@ -92,11 +98,22 @@ class Annotator:
             if label:
                 tf = max(self.lw - 1, 1)  # font thickness
                 w, h = cv2.getTextSize(label, 0, fontScale=self.lw / 3, thickness=tf)[0]
-                c2 = c1[0] + w, c1[1] - h - 3
+
+                if text_position == 'tl':
+                    c2 = c1[0] + w, c1[1] - h - 3
+                elif text_position == 'br':
+                    c1 = c2[0] - w, c2[1] + h + 3
                 cv2.rectangle(self.im, c1, c2, color, -1, cv2.LINE_AA)  # filled
                 cv2.putText(self.im, label, (c1[0], c1[1] - 2), 0, self.lw / 3, txt_color, thickness=tf,
                             lineType=cv2.LINE_AA)
 
+    def intersect_box(self, pred_box, gt_box, alpha = 0.4, box_color=(255, 0, 0)):
+        c1, c2 = (int(max(pred_box[0], gt_box[0])), int(max(pred_box[1], gt_box[1]))), (int(min(pred_box[2], gt_box[2])), int(min(pred_box[3], gt_box[3])))
+        intersect = self.im.copy()
+
+        cv2.rectangle(intersect, c1, c2, box_color, -1)
+        cv2.addWeighted(self.im, alpha, intersect, 1 - alpha, 0, dst=self.im)
+        
     def rectangle(self, xy, fill=None, outline=None, width=1):
         # Add rectangle to image (PIL-only)
         self.draw.rectangle(xy, fill, outline, width)
