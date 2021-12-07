@@ -1,3 +1,4 @@
 Dataset/
 *.txt
 *.docx
+__pycache__
