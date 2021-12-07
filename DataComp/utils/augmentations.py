@@ -263,9 +263,6 @@ def cutout(im, labels, first_size=(0.5, 1), second_size=(0.4, 0.5), p=0.5):
     return im, labels
     
 
-    return im,abels
-
-
 def mixup(im, labels, im2, labels2):
     # Applies MixUp augmentation https://arxiv.org/pdf/1710.09412.pdf
     r = np.random.beta(32.0, 32.0)  # mixup ratio, alpha=beta=32.0
