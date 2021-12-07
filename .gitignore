@@ -2,3 +2,4 @@ Dataset/
 *.txt
 *.docx
 __pycache__
+*.pyc
