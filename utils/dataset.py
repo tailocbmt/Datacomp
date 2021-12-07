@@ -37,7 +37,7 @@ def check_num_files(dir, image_folder, label_folder):
     print("Done checking")
 
 
-def inspect_every_images(dir, image_folder, label_folder, no_label = False, phrase=None):
+def inspect_every_images(dir, image_folder, label_folder, suffix=".txt", no_label=False, phrase=None):
     """
     Function to inspect every image in a directory with its annotation one by one
     annotations file must have YOLO format
@@ -48,7 +48,8 @@ def inspect_every_images(dir, image_folder, label_folder, no_label = False, phra
         if phrase:
             assert isinstance(phrase, str), "phrase to check must be a string"
             if phrase in label:
-                image_name = label.split('.')[0]
+                suffix_pos = label.find(suffix)
+                image_name = label[:suffix_pos]
                 label_path = os.path.join(label_dir, label)
                 data = np.loadtxt(label_path)
                 if data.ndim == 1:
@@ -64,7 +65,8 @@ def inspect_every_images(dir, image_folder, label_folder, no_label = False, phra
                 plt.imshow(img)
                 plt.show()
         else:
-            image_name = label.split('.')[0] # change accordingly to dataset
+            suffix_pos = label.find(suffix)
+            image_name = label[:suffix_pos]
             label_path = os.path.join(label_dir, label)
             data = np.loadtxt(label_path)
             if data.ndim == 1:
