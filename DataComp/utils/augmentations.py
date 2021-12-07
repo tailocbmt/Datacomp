@@ -233,31 +233,37 @@ def copy_paste(im, labels, segments, p=0.5):
     return im, labels, segments
 
 
-def cutout(im, labels, p=0.5):
+def cutout(im, labels, first_size=(0.5, 1), second_size=(0.4, 0.5), p=0.5):
     # Applies image cutout augmentation https://arxiv.org/abs/1708.04552
-    if random.random() < p:
-        h, w = im.shape[:2]
-        scales = [0.5] * 1 + [0.25] * 2 + [0.125] * 4 + [0.0625] * 8 + [0.03125] * 16  # image size fraction
-        for s in scales:
-            mask_h = random.randint(1, int(h * s))  # create random masks
-            mask_w = random.randint(1, int(w * s))
+    for i in range(len(labels)):
+        if random.random() < p:
+            label, x1, y1, x2, y2 = labels[i, :].numpy().astype(np.int32)
 
-            # box
-            xmin = max(0, random.randint(0, w) - mask_w // 2)
-            ymin = max(0, random.randint(0, h) - mask_h // 2)
-            xmax = min(w, xmin + mask_w)
-            ymax = min(h, ymin + mask_h)
+            box_h, box_w = y2-y1, x2-x1
+            
+            pos = random.choice(['up', 'right', 'left'])
+            if pos == 'up':
+                mask_w = random.randint(int(box_w*first_size[0]), int(box_w*first_size[1]))
+                mask_h = random.randint(int(box_h*second_size[0]), int(box_h*second_size[1]))
+                x2 = x1 + mask_w
+                y2 = y2 + mask_h
+            elif pos == 'right':
+                mask_w = random.randint(int(box_w*second_size[0]), int(box_w*second_size[1]))
+                mask_h = random.randint(int(box_h*first_size[0]), int(box_h*first_size[1]))
+                x1 = x2 - mask_w
+                y1 = y2 - mask_h
+            else: 
+                mask_w = random.randint(int(box_w*second_size[0]), int(box_w*second_size[1]))
+                mask_h = random.randint(int(box_h*first_size[0]), int(box_h*first_size[1]))
+                x2 = x1 + mask_w
+                y2 = y1 + mask_h
 
-            # apply random color mask
-            im[ymin:ymax, xmin:xmax] = [random.randint(64, 191) for _ in range(3)]
+            im = im[y1: y2, x1: x2] = [128, 128, 128]
 
-            # return unobscured labels
-            if len(labels) and s > 0.03:
-                box = np.array([xmin, ymin, xmax, ymax], dtype=np.float32)
-                ioa = bbox_ioa(box, labels[:, 1:5])  # intersection over area
-                labels = labels[ioa < 0.60]  # remove >60% obscured labels
+    return im, labels
+    
 
-    return labels
+    return im,abels
 
 
 def mixup(im, labels, im2, labels2):
