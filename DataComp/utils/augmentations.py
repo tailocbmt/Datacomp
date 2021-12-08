@@ -233,32 +233,37 @@ def copy_paste(im, labels, segments, p=0.5):
     return im, labels, segments
 
 
-def cutout(im, labels, first_size=(0.5, 1), second_size=(0.4, 0.5), p=0.5):
+def cutout(im, labels, first_size=(0.5, 1), second_size=(0.2, 0.4), p=0.5):
     # Applies image cutout augmentation https://arxiv.org/abs/1708.04552
     for i in range(len(labels)):
         if random.random() < p:
-            label, x1, y1, x2, y2 = labels[i, :].numpy().astype(np.int32)
+            label, x1, y1, x2, y2 = labels[i, :].numpy().astype(np.int64)
 
+            cv2.rectangle(im,(x1,y1), (x2,y2), (0, 255,0), 1)
             box_h, box_w = y2-y1, x2-x1
             
             pos = random.choice(['up', 'right', 'left'])
             if pos == 'up':
                 mask_w = random.randint(int(box_w*first_size[0]), int(box_w*first_size[1]))
                 mask_h = random.randint(int(box_h*second_size[0]), int(box_h*second_size[1]))
-                x2 = x1 + mask_w
-                y2 = y2 + mask_h
+                x2mask = x1 + mask_w
+                y2mask = y1 + mask_h
+                print(x1, y1, x2mask, y2mask)
+
             elif pos == 'right':
                 mask_w = random.randint(int(box_w*second_size[0]), int(box_w*second_size[1]))
                 mask_h = random.randint(int(box_h*first_size[0]), int(box_h*first_size[1]))
                 x1 = x2 - mask_w
                 y1 = y2 - mask_h
+                x2mask = x2
+                y2mask = y2
             else: 
                 mask_w = random.randint(int(box_w*second_size[0]), int(box_w*second_size[1]))
                 mask_h = random.randint(int(box_h*first_size[0]), int(box_h*first_size[1]))
-                x2 = x1 + mask_w
-                y2 = y1 + mask_h
+                x2mask = x1 + mask_w
+                y2mask = y1 + mask_h
 
-            im = im[y1: y2, x1: x2] = [128, 128, 128]
+            im[y1+1: y2mask, x1+1: x2mask] = [128, 128, 128]
 
     return im, labels
     
