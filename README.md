@@ -61,7 +61,7 @@ to evaluate participant's submission on private testing set.
 ### QuickStart <a name="quickstart"></a>
 Click the image below 
 
-<a href="https://colab.research.google.com/drive/18VZqW9X2bI2Os28BhIyE4YqkFC9FKRrf?usp=sharing" target="_blank">
+<a href="https://colab.research.google.com/drive/1rt4JmkZ9KVHWNyC-n5DAG3jrZbO3ep2g?usp=sharing" target="_blank">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a>
 
