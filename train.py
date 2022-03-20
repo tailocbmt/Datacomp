@@ -16,18 +16,17 @@ from torch.cuda import amp
 import torch.nn.functional as F
 from torch.optim import Adam, SGD, lr_scheduler
 
-from DataComp import val
 sys.path.insert(0, "Datacomp")
 from models.yolo import Model
-from DataComp.utils.loss import ComputeLoss
-from DataComp.utils.plots import plot_labels, plot_lr_scheduler
-from DataComp.utils.metrics import fitness
-from DataComp.utils.loggers import Loggers
-from DataComp.utils.callbacks import Callbacks
-from DataComp.utils.autoanchor import check_anchors
-from DataComp.utils.datasets import create_dataloader
-from DataComp.utils.torch_utils import EarlyStopping, ModelEMA, de_parallel, intersect_dicts, select_device
-from DataComp.utils.general import labels_to_class_weights, increment_path, labels_to_image_weights, init_seeds, \
+from utils.loss import ComputeLoss
+from utils.plots import plot_labels, plot_lr_scheduler
+from utils.metrics import fitness
+from utils.loggers import Loggers
+from utils.callbacks import Callbacks
+from utils.autoanchor import check_anchors
+from utils.datasets import create_dataloader
+from utils.torch_utils import EarlyStopping, ModelEMA, de_parallel, intersect_dicts, select_device
+from utils.general import labels_to_class_weights, increment_path, labels_to_image_weights, init_seeds, \
     strip_optimizer, check_dataset, check_img_size, check_requirements, check_file,\
     check_yaml, check_suffix, one_cycle, colorstr, methods, set_logging
 
