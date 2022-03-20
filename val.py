@@ -7,13 +7,13 @@ import torch
 import numpy as np
 from tqdm import tqdm
 
-from DataComp.utils.callbacks import Callbacks
-from DataComp.models.experimental import attempt_load
-from DataComp.utils.datasets import create_dataloader
-from DataComp.utils.plots import plot_images, output_to_target
-from DataComp.utils.metrics import ap_per_class, ConfusionMatrix
-from DataComp.utils.torch_utils import select_device, time_sync
-from DataComp.utils.general import check_dataset, check_img_size, check_suffix, check_yaml, box_iou,\
+from utils.callbacks import Callbacks
+from models.experimental import attempt_load
+from utils.datasets import create_dataloader
+from utils.plots import plot_images, output_to_target
+from utils.metrics import ap_per_class, ConfusionMatrix
+from utils.torch_utils import select_device, time_sync
+from utils.general import check_dataset, check_img_size, check_suffix, check_yaml, box_iou,\
     non_max_suppression, scale_coords, xyxy2xywh, xywh2xyxy, set_logging, increment_path, colorstr
 
 
