@@ -5,13 +5,13 @@ from pathlib import Path
 import cv2
 import torch
 
-from DataComp.models.experimental import attempt_load
-from DataComp.utils.datasets import LoadImages
-from DataComp.utils.general import check_img_size, check_requirements, colorstr, is_ascii, \
+from models.experimental import attempt_load
+from utils.datasets import LoadImages
+from utils.general import check_img_size, check_requirements, colorstr, is_ascii, \
     non_max_suppression, scale_coords, xyxy2xywh, set_logging, increment_path, \
     save_one_box
-from DataComp.utils.plots import Annotator, colors
-from DataComp.utils.torch_utils import select_device, time_sync
+from utils.plots import Annotator, colors
+from utils.torch_utils import select_device, time_sync
 
 
 FILE = Path(__file__).resolve()
